@@ -71,6 +71,24 @@ def search_hn(query: str, count: int = 10) -> list[dict]:
             })
         return results
 
-    
+@mcp.resource("hn://top")
+def top_stories_resource() -> str:
+    """
+    Top 5 HN stories as readable context.
+    """
+    with httpx.Client() as client:
+        response = client.get(f"{HN_BASE}/topstories.json")
+        story_ids = response.json()[:5]
+
+        lines = []
+        for story_id in story_ids:
+            r = client.get(f"{HN_BASE}/item/{story_id}.json")
+            data = r.json()
+            lines.append(
+                f"- {data.get('title')} (score: {data.get('score')}) "
+                f"by {data.get('by')} | {data.get('url', 'no url')}"
+            )
+        return "\n".join(lines)  
+
 if __name__ == "__main__":
     mcp.run()
