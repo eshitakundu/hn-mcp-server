@@ -1,5 +1,6 @@
 import httpx
 from mcp.server.fastmcp import FastMCP
+from datetime import datetime
 
 mcp = FastMCP("hn-server")
 
@@ -11,7 +12,7 @@ def get_top_story(count: int = 10) -> list[dict]:
     """
     Fetch top N stories from Hacker News on the basis of score.
     """
-    with httpx.Client() as Client:
+    with httpx.Client() as client:
         response = client.get(f"{HN_BASE}/topstories.json")
         story_ids = response.json()[:count]
 
