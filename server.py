@@ -90,5 +90,14 @@ def top_stories_resource() -> str:
             )
         return "\n".join(lines)  
 
+@mcp.prompt()
+def hn_briefing() -> str:
+    """Morning briefing prompt for HN digest."""
+    return (
+        "You are a tech news assistant. "
+        "Fetch the top 5 HN stories and summarize each in one sentence. "
+        "Group them by topic if possible."
+    )
+
 if __name__ == "__main__":
     mcp.run()
