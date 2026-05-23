@@ -1,0 +1,76 @@
+import httpx
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP("hn-server")
+
+HN_BASE = "https://hacker-news.firebaseio.com/v0"
+ALGOLIA = "https://hn.algolia.com/api/v1"
+
+@mcp.tool()
+def get_top_story(count: int = 10) -> list[dict]:
+    """
+    Fetch top N stories from Hacker News on the basis of score.
+    """
+    with httpx.Client() as Client:
+        response = client.get(f"{HN_BASE}/topstories.json")
+        story_ids = response.json()[:count]
+
+        stories=[]
+        for story_id in story_ids:
+            r = client.get(f"{HN_BASE}/item/{story_id}.json")
+            data = r.json()
+            stories.append({
+                "id": story_id,
+                "title": data.get("title"),
+                "url": data.get("url"),
+                "score": data.get("score"),
+                "by": data.get("by"),
+                "comments": data.get("descendants", 0)
+            })
+        return stories
+    
+@mcp.tool()
+def get_story_details(story_id: int) -> dict:
+    """
+    Get full details of a single HN story including comment count and metadata.
+    """
+    with httpx.Client() as client:
+        r = client.get(f"{HN_BASE}/item/{story_id}.json")
+        data = r.json()
+        return {
+            "id": story_id,
+            "title": data.get("title"),
+            "url": data.get("url"),
+            "text": data.get("text"),  
+            "score": data.get("score"),
+            "by": data.get("by"),
+            "time": datetime.fromtimestamp(data.get("time")).isoformat(), 
+            "comments": data.get("descendants", 0),
+            "type": data.get("type")
+        }
+    
+@mcp.tool()
+def search_hn(query: str, count: int = 10) -> list[dict]:
+    """
+    Search Hacker News stories by keyword using Algolia.
+    """
+    with httpx.Client() as client:
+        r = client.get(
+            f"{ALGOLIA}/search",
+            params={"query": query, "tags": "story", "hitsPerPage": count}
+        )
+        data = r.json()
+        results = []
+        for hit in data.get("hits", []):
+            results.append({
+                "title": hit.get("title"),
+                "url": hit.get("url"),
+                "author": hit.get("author"),
+                "points": hit.get("points"),
+                "story_id": hit.get("objectID")
+            })
+        return results
+
+    
+if __name__ == "__main__":
+    mcp.run()
