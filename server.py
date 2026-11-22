@@ -1,13 +1,17 @@
 import httpx
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 from datetime import datetime
 
 mcp = FastMCP("hn-server")
 
+# Tool hints: tell MCP clients what each tool does, so they know when to ask before running it.
+READ_WEB = ToolAnnotations(readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=True)
+
 HN_BASE = "https://hacker-news.firebaseio.com/v0"
 ALGOLIA = "https://hn.algolia.com/api/v1"
 
-@mcp.tool()
+@mcp.tool(annotations=READ_WEB)
 def get_top_story(count: int = 10) -> list[dict]:
     """
     Fetch top N stories from Hacker News on the basis of score.
@@ -30,7 +34,7 @@ def get_top_story(count: int = 10) -> list[dict]:
             })
         return stories
     
-@mcp.tool()
+@mcp.tool(annotations=READ_WEB)
 def get_story_details(story_id: int) -> dict:
     """
     Get full details of a single HN story including comment count and metadata.
@@ -50,7 +54,7 @@ def get_story_details(story_id: int) -> dict:
             "type": data.get("type")
         }
     
-@mcp.tool()
+@mcp.tool(annotations=READ_WEB)
 def search_hn(query: str, count: int = 10) -> list[dict]:
     """
     Search Hacker News stories by keyword using Algolia.
